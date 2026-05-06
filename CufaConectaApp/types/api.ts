@@ -83,7 +83,7 @@ export interface CurriculoInfo {
   filename: string;
 }
 
-/** Corpo de `analise` em POST /curriculos/curriculo/analisar — AnaliseCurriculoDto */
+/** Resposta de POST /curriculos/analisar — wrapper com `analise` (AnaliseCurriculoDto no backend). */
 export interface AnaliseCurriculo {
   resumo: string;
   pontosFortes: string[];

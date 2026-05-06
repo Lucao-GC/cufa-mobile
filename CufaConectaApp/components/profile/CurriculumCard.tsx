@@ -38,6 +38,7 @@ export default function CurriculumCard({ filename, loading, onChanged }: Props) 
         uri: asset.uri,
         name: asset.name ?? "curriculo.pdf",
         mimeType: asset.mimeType,
+        file: asset.file,
       });
       Alert.alert("Sucesso", "Currículo enviado.");
       onChanged();
@@ -61,6 +62,7 @@ export default function CurriculumCard({ filename, loading, onChanged }: Props) 
         uri: asset.uri,
         name: asset.name ?? "curriculo.pdf",
         mimeType: asset.mimeType,
+        file: asset.file,
       });
       setAnalise(data);
       setModalVisible(true);
@@ -222,6 +224,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
   },
+  /** Rótulo verde (botão Excluir) */
   textGreen: {
     color: "#0B6B2F",
     fontWeight: "600",

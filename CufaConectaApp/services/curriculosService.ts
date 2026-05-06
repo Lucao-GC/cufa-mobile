@@ -1,5 +1,40 @@
+import { Platform } from "react-native";
+
 import type { AnaliseCurriculo, AnaliseCurriculoResponse, CurriculoInfo } from "../types/api";
 import { api, axiosFormDataConfig } from "./api";
+
+export type CurriculoUploadPick = {
+  uri: string;
+  name: string;
+  mimeType?: string | null;
+  /** Preenchido no web pelo expo-document-picker (`asset.file`). */
+  file?: File | Blob;
+};
+
+async function appendCurriculoFilePart(form: FormData, pick: CurriculoUploadPick) {
+  const filename = pick.name?.trim() || "curriculo.pdf";
+
+  if (pick.file != null) {
+    form.append("file", pick.file, filename);
+    return;
+  }
+
+  if (Platform.OS === "web") {
+    const res = await fetch(pick.uri);
+    const blob = await res.blob();
+    form.append("file", blob, filename);
+    return;
+  }
+
+  form.append(
+    "file",
+    {
+      uri: pick.uri,
+      name: filename,
+      type: pick.mimeType ?? "application/pdf",
+    } as unknown as Blob
+  );
+}
 
 /** Backend POST /curriculos/update devolve texto (URL); POST /upload devolve JSON { filename }. */
 function normalizeCurriculoUpload(data: unknown): CurriculoInfo {
@@ -19,17 +54,9 @@ export async function getCurriculoArquivo() {
   return data;
 }
 
-export async function uploadCurriculo(file: {
-  uri: string;
-  name: string;
-  mimeType?: string | null;
-}) {
+export async function uploadCurriculo(pick: CurriculoUploadPick) {
   const form = new FormData();
-  form.append("file", {
-    uri: file.uri,
-    name: file.name,
-    type: file.mimeType ?? "application/pdf",
-  } as unknown as Blob);
+  await appendCurriculoFilePart(form, pick);
 
   const { data } = await api.post<unknown>("/curriculos/update", form, axiosFormDataConfig());
   return normalizeCurriculoUpload(data);
@@ -39,21 +66,13 @@ export async function removerCurriculo() {
   await api.delete("/curriculos");
 }
 
-/** POST /curriculos/curriculo/analisar — exige Ollama no backend; senão retorna erro 500. */
-export async function analisarCurriculoPdf(file: {
-  uri: string;
-  name: string;
-  mimeType?: string | null;
-}): Promise<AnaliseCurriculo> {
+/** POST /curriculos/analisar (multipart `file`) — exige Ollama no backend quando configurado. */
+export async function analisarCurriculoPdf(pick: CurriculoUploadPick): Promise<AnaliseCurriculo> {
   const form = new FormData();
-  form.append("file", {
-    uri: file.uri,
-    name: file.name,
-    type: file.mimeType ?? "application/pdf",
-  } as unknown as Blob);
+  await appendCurriculoFilePart(form, pick);
 
   const { data } = await api.post<AnaliseCurriculoResponse>(
-    "/curriculos/curriculo/analisar",
+    "/curriculos/analisar",
     form,
     axiosFormDataConfig()
   );
